@@ -105,6 +105,7 @@ class BiDirectional:
         critical_res: Optional[int] = None,
         # seed: Union[int] = None,
         REF_callback: Optional[REFCallback] = None,
+        num: Optional[int] = 1
     ):
         # Check inputs
         check(G, max_res, min_res, direction, REF_callback, __name__)
@@ -166,37 +167,37 @@ class BiDirectional:
         "Run the algorithm in parallel"
         raise NotImplementedError("Coming soon")
 
-    @property
-    def path(self):
+    # @property
+    def path(self, k):
         """Get list with nodes in calculated path."""
-        path = self.bidirectional_cpp.getPath()
+        path = self.bidirectional_cpp.getPath(k)
         # format as list on return as SWIG returns "tuple"
         if len(path) <= 0:
             return None
         return [self.G.nodes[p]["original_label"] for p in path]
 
-    @property
-    def total_cost(self):
+    # @property
+    def total_cost(self, k):
         """Get accumulated cost along the path."""
-        path = self.bidirectional_cpp.getPath()
-        return self.bidirectional_cpp.getTotalCost() if len(path) > 0 else None
+        path = self.bidirectional_cpp.getPath(k)
+        return self.bidirectional_cpp.getTotalCost(k) if len(path) > 0 else None
 
-    @property
-    def consumed_resources(self):
+    # @property
+    def consumed_resources(self, k):
         """Get accumulated resources consumed along the path."""
-        path = self.bidirectional_cpp.getPath()
-        res = self.bidirectional_cpp.getConsumedResources()
+        path = self.bidirectional_cpp.getPath(k)
+        res = self.bidirectional_cpp.getConsumedResources(k)
         if len(path) > 0 and len(res) > 0:
             return list(res)
         else:
             return None
 
-    def check_critical_res(self):
+    def check_critical_res(self,k):
         """After running the algorithm, one can check if critical resource is
         tight (difference between final resource and maximum) and prints a
         message if it doesn't match to the one chosen (or default one).
         """
-        self.bidirectional_cpp.checkCriticalRes()
+        self.bidirectional_cpp.checkCriticalRes(k)
 
     def _init_graph(self):
         # Convert node label to integers and saves original labels in
@@ -204,7 +205,8 @@ class BiDirectional:
         self.G = convert_node_labels_to_integers(
             self.G, label_attribute="original_label"
         )
-        self._original_node_labels = get_node_attributes(self.G, "original_label")
+        self._original_node_labels = get_node_attributes(
+            self.G, "original_label")
         # Save source and sink node ids (integers)
         self._source_id = self._get_original_node_label("Source")
         self._sink_id = self._get_original_node_label("Sink")

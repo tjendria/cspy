@@ -8,3 +8,7 @@ xml
 *.o
 *.so
 *.sw*
+.idea*/*
+.vscode*/*
+
+prova.py
