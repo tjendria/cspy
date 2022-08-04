@@ -135,6 +135,8 @@ class BiDirectional:
         )
         self._load_graph()
         # pass solving attributes
+        if isinstance(num, int):
+            self.bidirectional_cpp.setK(num)
         if direction != "both":
             self.bidirectional_cpp.setDirection(direction)
         if method in ["random", "generated", "processed"]:

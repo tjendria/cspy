@@ -47,7 +47,7 @@ class Params {
   int critical_res = 0;
   /// Callback to custom REF
   bidirectional::REFCallback* ref_callback = nullptr;
-  int k = 0;
+  int k = 2;
   /* Constructors */
 
   Params(){};
