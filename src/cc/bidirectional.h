@@ -76,6 +76,7 @@ class BiDirectional {
 
   /* Getters */
 
+  std::vector<int> getMerged() const;
   /// Return the final path
   std::vector<int> getPath(const int& k) const;
   /// Return the consumed resources

@@ -130,8 +130,7 @@ void BiDirectional::runPreprocessing() {
 void BiDirectional::init() {
   // Initialise labels
   labelling::Label label;
-  best_label_ = std::make_shared<std::vector<labelling::Label>>(
-      std::vector<labelling::Label>(params_ptr_->k));
+  best_label_ = std::make_shared<std::vector<labelling::Label>>(params_ptr_->k);
 
   // Initialise resource bounds
   initResourceBounds();
@@ -674,6 +673,22 @@ void BiDirectional::getMinimumWeights(double* fwd_min, double* bwd_min) {
   }
 }
 
+void insertLabel(
+    std::vector<labelling::Label>* sorted_label_vec,
+    const labelling::Label&        label) {
+  // Find the first label with a larger weight than `label`
+  if (sorted_label_vec->empty()){sorted_label_vec->push_back(label);}
+  auto it = std::find_if(
+      sorted_label_vec->begin(),
+      sorted_label_vec->end(),
+      [&label](const labelling::Label& l) { return l.weight > label.weight; });
+  if (it != sorted_label_vec->end()) {
+    sorted_label_vec->pop_back();
+    sorted_label_vec->insert(it, label);
+  }
+}
+
+
 void BiDirectional::joinLabels() {
   // ref id with critical_res
   SPDLOG_INFO("Merging");
@@ -732,13 +747,16 @@ void BiDirectional::joinLabels() {
                       min_res);
                   if (merged_label.vertex.lemon_id != -1 &&
                       merged_label.checkFeasibility(max_res, min_res) &&
-                      labelling::halfwayCheck(merged_label, merged_labels_)) {if ((((best_label_->at(params_ptr_->k  -2)).vertex.lemon_id == -1 )||
-                        (merged_label.fullDominance(best_label_->at(params_ptr_->k  -2), FWD) || merged_label.weight < (best_label_->at(params_ptr_->k  -2)).weight)) 
-                        && std::find(begin(*best_label_), end(*best_label_), merged_label) == end(*best_label_)){
-                        //insert in last position
-                        best_label_->at(params_ptr_->k  -1) = merged_label;
-                        //sort
-                        sort(begin(*best_label_), end(*best_label_), [](labelling::Label& a, labelling::Label& b) {return a.weight < b.weight; });
+                      labelling::halfwayCheck(merged_label, merged_labels_)) {
+                        if (std::find(begin(*best_label_), end(*best_label_), merged_label) == end(*best_label_)){
+                        insertLabel(best_label_.get(), merged_label);
+                        // if ((((best_label_->at(params_ptr_->k  -2)).vertex.lemon_id == -1 )||
+                        // (merged_label.fullDominance(best_label_->at(params_ptr_->k  -2), FWD) || merged_label.weight < (best_label_->at(params_ptr_->k  -2)).weight)) 
+                        // && std::find(begin(*best_label_), end(*best_label_), merged_label) == end(*best_label_)){
+                        // //insert in last position
+                        // best_label_->at(params_ptr_->k  -1) = merged_label;
+                        // //sort
+                        // sort(begin(*best_label_), end(*best_label_), [](labelling::Label& a, labelling::Label& b) {return a.weight < b.weight; });
                         SPDLOG_INFO(
                             "\t {} \t | \t {}",
                             getElapsedTime(),
