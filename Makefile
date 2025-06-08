@@ -13,7 +13,7 @@ benchmark:
 
 # Build and test python interface
 p:
-	cmake -S . -Bbuild -DCMAKE_BUILD_TYPE=Release  -DBUILD_TESTING=ON \
+	cmake -S . -Bbuild -DCMAKE_BUILD_TYPE=Release -DPython3_EXECUTABLE=$(shell pyenv which python) -DBUILD_TESTING=ON \
       -DBUILD_PYTHON=ON -DBUILD_SHARED_LIBS=ON
 	cmake --build build --config Release --target all -v
 	cd build && ctest --verbose -R python_unittest

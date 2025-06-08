@@ -33,7 +33,7 @@ setup(
         '@PROJECT_NAME@': ['.libs/*', 'algorithms/*'],
     },
     include_package_data=True,
-    install_requires=['networkx', 'numpy'],
+    install_requires=['networkx', 'numpy<2.0'],
     classifiers=[
         'Operating System :: POSIX :: Linux',
         'Operating System :: MacOS :: MacOS X',
