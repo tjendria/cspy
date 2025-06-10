@@ -2,6 +2,7 @@
 #define SRC_CC_BIDIRECTIONAL_H__
 
 #include <chrono> // timing (e.g. time_point)
+#include <memory>
 #include <vector>
 
 // cspy
@@ -75,19 +76,21 @@ class BiDirectional {
 
   /* Getters */
 
+  std::vector<int> getMerged() const;
   /// Return the final path
-  std::vector<int> getPath() const;
+  std::vector<int> getPath(const int& k) const;
   /// Return the consumed resources
-  std::vector<double> getConsumedResources() const;
+  std::vector<double> getConsumedResources(const int& k) const;
   /// Return the total cost
-  double getTotalCost() const;
+  double getTotalCost(const int& k) const;
   /// After running the algorithm, one can check if critical resource is tight
   /// (difference between final resource and maximum) and prints a message if it
   /// doesn't match to the one chosen in Params.
-  void checkCriticalRes() const;
+  void checkCriticalRes(const int& k) const;
 
   /* Setters: wrappers. @see bidirectional::Params */
 
+  void setK(const int& k_in) { params_ptr_->setK(k_in); };
   /// @see bidirectional::Params
   void setDirection(const std::string& direction_in) {
     params_ptr_->setDirection(direction_in);
@@ -154,7 +157,8 @@ class BiDirectional {
   /* labels and containers */
 
   /// Final best label (merged or otherwise)
-  std::shared_ptr<labelling::Label> best_label_;
+  /// std::shared_ptr<labelling::Label> best_label_;
+  std::shared_ptr<std::vector<labelling::Label>> best_label_;
 
   std::unique_ptr<Search> fwd_search_ptr_, bwd_search_ptr_;
 

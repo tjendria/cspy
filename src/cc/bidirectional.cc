@@ -38,20 +38,20 @@ BiDirectional::BiDirectional(
   // spdlog::set_pattern("%+"); // back to default format
 }
 
-std::vector<int> BiDirectional::getPath() const {
-  return best_label_->partial_path;
+std::vector<int> BiDirectional::getPath(const int& k) const {
+  return (best_label_->at(k)).partial_path;
 }
 
-std::vector<double> BiDirectional::getConsumedResources() const {
-  return best_label_->resource_consumption;
+std::vector<double> BiDirectional::getConsumedResources(const int& k) const {
+  return (best_label_->at(k)).resource_consumption;
 }
 
-double BiDirectional::getTotalCost() const {
-  return best_label_->weight;
+double BiDirectional::getTotalCost(const int& k) const {
+  return (best_label_->at(k)).weight;
 }
 
-void BiDirectional::checkCriticalRes() const {
-  const std::vector<double>& res      = best_label_->resource_consumption;
+void BiDirectional::checkCriticalRes(const int& k) const {
+  const std::vector<double>& res      = (best_label_->at(k)).resource_consumption;
   double                     min_diff = std::numeric_limits<double>::infinity();
   int                        min_r    = 0;
   for (int r = 0; r < res.size(); r++) {
@@ -130,7 +130,8 @@ void BiDirectional::runPreprocessing() {
 void BiDirectional::init() {
   // Initialise labels
   labelling::Label label;
-  best_label_ = std::make_shared<labelling::Label>(label);
+  best_label_ = std::make_shared<std::vector<labelling::Label>>(params_ptr_->k);
+
   // Initialise resource bounds
   initResourceBounds();
   // Init individual searches
@@ -602,24 +603,28 @@ void BiDirectional::postProcessing() {
       // If FWD direction specified or backward direction not traversed
       if (params_ptr_->direction == FWD) {
         // Forward
-        best_label_ = fwd_search_ptr_->intermediate_label;
+        best_label_->at(params_ptr_->k  -1) = *fwd_search_ptr_->intermediate_label;
+        sort(begin(*best_label_), end(*best_label_), [](labelling::Label& a, labelling::Label& b) {return a.weight < b.weight; });
       }
       // If backward direction specified or FWD direction not traversed
       else {
         // Backward
-        best_label_ =
-            std::make_shared<labelling::Label>(labelling::processBwdLabel(
-                *bwd_search_ptr_->intermediate_label, max_res, min_res, true));
+        best_label_->at(params_ptr_->k  -1) =labelling::processBwdLabel(
+                *bwd_search_ptr_->intermediate_label, max_res, min_res,
+                true);
+        sort(begin(*best_label_), end(*best_label_), [](labelling::Label& a, labelling::Label& b) {return a.weight < b.weight; });
       }
     }
   } else {
     // final label contains the label that triggered the early termination
     if (terminated_early_w_st_path_direction_ == FWD) {
-      best_label_ = fwd_search_ptr_->intermediate_label;
+      best_label_->at(params_ptr_->k  -1) = *fwd_search_ptr_->intermediate_label;
+      sort(begin(*best_label_), end(*best_label_), [](labelling::Label& a, labelling::Label& b) {return a.weight < b.weight; });
     } else {
-      best_label_ =
-          std::make_shared<labelling::Label>(labelling::processBwdLabel(
-              *bwd_search_ptr_->intermediate_label, max_res, min_res, true));
+      best_label_->at(params_ptr_->k  -1) =
+          labelling::processBwdLabel(
+              *bwd_search_ptr_->intermediate_label, max_res, min_res, true);
+      sort(begin(*best_label_), end(*best_label_), [](labelling::Label& a, labelling::Label& b) {return a.weight < b.weight; });
     }
   }
   // 80 stars at the end
@@ -667,6 +672,22 @@ void BiDirectional::getMinimumWeights(double* fwd_min, double* bwd_min) {
     }
   }
 }
+
+void insertLabel(
+    std::vector<labelling::Label>* sorted_label_vec,
+    const labelling::Label&        label) {
+  // Find the first label with a larger weight than `label`
+  if (sorted_label_vec->empty()){sorted_label_vec->push_back(label);}
+  auto it = std::find_if(
+      sorted_label_vec->begin(),
+      sorted_label_vec->end(),
+      [&label](const labelling::Label& l) { return l.weight > label.weight; });
+  if (it != sorted_label_vec->end()) {
+    sorted_label_vec->pop_back();
+    sorted_label_vec->insert(it, label);
+  }
+}
+
 
 void BiDirectional::joinLabels() {
   // ref id with critical_res
@@ -727,26 +748,30 @@ void BiDirectional::joinLabels() {
                   if (merged_label.vertex.lemon_id != -1 &&
                       merged_label.checkFeasibility(max_res, min_res) &&
                       labelling::halfwayCheck(merged_label, merged_labels_)) {
-                    if (best_label_->vertex.lemon_id == -1 ||
-                        (merged_label.fullDominance(*best_label_, FWD) ||
-                         merged_label.weight < best_label_->weight)) {
-                      // Save
-                      best_label_ =
-                          std::make_shared<labelling::Label>(merged_label);
-                      SPDLOG_INFO(
-                          "\t {} \t | \t {}",
-                          getElapsedTime(),
-                          best_label_->weight);
-                      // Tighten UB
-                      if (best_label_->weight < UB) {
-                        UB = best_label_->weight;
-                      }
-                      // Stop if time out or threshold found
-                      if (terminate(FWD, *best_label_)) {
-                        return;
-                      }
-                    }
-                  }
+                        if (std::find(begin(*best_label_), end(*best_label_), merged_label) == end(*best_label_)){
+                        insertLabel(best_label_.get(), merged_label);
+                        // if ((((best_label_->at(params_ptr_->k  -2)).vertex.lemon_id == -1 )||
+                        // (merged_label.fullDominance(best_label_->at(params_ptr_->k  -2), FWD) || merged_label.weight < (best_label_->at(params_ptr_->k  -2)).weight)) 
+                        // && std::find(begin(*best_label_), end(*best_label_), merged_label) == end(*best_label_)){
+                        // //insert in last position
+                        // best_label_->at(params_ptr_->k  -1) = merged_label;
+                        // //sort
+                        // sort(begin(*best_label_), end(*best_label_), [](labelling::Label& a, labelling::Label& b) {return a.weight < b.weight; });
+                        SPDLOG_INFO(
+                            "\t {} \t | \t {}",
+                            getElapsedTime(),
+                            (best_label_->at(0)).weight);
+                        // Tighten UB
+                        if ((best_label_->at(0)).weight < UB) {
+                          UB = (best_label_->at(0)).weight;
+                        }
+                        // Stop if time out or threshold found
+                        if (terminate(FWD, best_label_->at(0))) {
+                          return;
+                        }; } }
+                  //   if ((best_label_->at(i)).vertex.lemon_id == -1 ||
+                  //       (merged_label.fullDominance(best_label_->at(i), FWD) ||
+                  //       merged_label.weight < (best_label_->at(i)).weight)){}
                   // Add merged label to list
                   merged_labels_.push_back(merged_label);
                 } // else

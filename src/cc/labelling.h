@@ -23,7 +23,7 @@ namespace labelling {
  */
 class Label {
  public:
-  double                weight               = 0.0;
+  double                weight               = 1.0;
   bidirectional::Vertex vertex               = {-1, -1};
   std::vector<double>   resource_consumption = {};
   std::vector<int>      partial_path         = {};

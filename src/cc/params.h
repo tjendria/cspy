@@ -49,7 +49,7 @@ class Params {
   int critical_res = 0;
   /// Callback to custom REF
   bidirectional::REFCallback* ref_callback = nullptr;
-
+  int k = 2;
   /* Constructors */
 
   Params(){};
@@ -77,6 +77,7 @@ class Params {
   void setBoundsPruning(const bool& bounds_pruning_in) {
     bounds_pruning = bounds_pruning_in;
   }
+  void setK(const int& k_in) { k = k_in; }
   void setFindCriticalRes(const bool& find_critical_res_in) {
     find_critical_res = find_critical_res_in;
   }

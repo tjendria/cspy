@@ -327,7 +327,7 @@ bool operator>(const Label& label1, const Label& label2) {
 }
 
 std::ostream& operator<<(std::ostream& os, const Label& label) {
-  os << label.getString();
+  return (os << label.getString());
 }
 
 /**

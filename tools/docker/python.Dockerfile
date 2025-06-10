@@ -6,8 +6,8 @@ RUN yum install -y python3-devel wget
 
 # Download and install SWIG from git
 RUN git clone https://github.com/swig/swig.git --branch v4.0.2 \
-&& cd swig && ./autogen.sh && ./configure \
-&& make && make install && cd .. && rm -rf swig/
+    && cd swig && ./autogen.sh && ./configure \
+    && make && make install && cd .. && rm -rf swig/
 
 CMD [ "/usr/bin/bash" ]
 
@@ -28,4 +28,4 @@ ENV BUILD_PYTHON ${BUILD_PYTHON:-true}
 WORKDIR /root/
 COPY . .
 RUN mv tools/docker/scripts/* . \
-&& chmod +x run_tests build_manylinux_wheels
+    && chmod +x run_tests build_manylinux_wheels
