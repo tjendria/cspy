@@ -105,8 +105,8 @@ class BiDirectional:
         critical_res: Optional[int] = None,
         # seed: Union[int] = None,
         REF_callback: Optional[REFCallback] = None,
-        num: Optional[int] = 1
         two_cycle_elimination: Optional[bool] = False,
+        num: Optional[int] = 1
     ):
         # Check inputs
         check(G, max_res, min_res, direction, REF_callback, __name__)

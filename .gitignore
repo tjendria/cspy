@@ -9,3 +9,4 @@ xml
 *.so
 *.sw*
 *.DS_Store
+.python-version
