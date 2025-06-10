@@ -25,6 +25,8 @@ class Search {
   /// Number of labels generated (includes the possibly infeasible extensions)
   int generated_count = 0;
 
+  size_t k;
+
   /* Search-related parameters */
 
   /// Lower bounds from any node to sink
@@ -35,7 +37,25 @@ class Search {
   /// Intermediate current best label with possibly complete source-sink path
   /// (shared pointer as we want to be able to substitute it without
   /// resetting)
-  std::shared_ptr<labelling::Label> intermediate_label;
+
+  // std::shared_ptr<labelling::Label> intermediate_label;
+  /// Need custom comparator for multiset since elements are pointers
+  struct LabelCompare {
+    using CT = std::shared_ptr<labelling::Label>;
+    bool operator()(const CT& a, const CT& b) const {
+      const int c_res = a->params_ptr->critical_res;
+      auto getScalar = [c_res](const CT& label) {
+        return (label->resource_consumption.size() > c_res && // push invalid labels to end
+                label->partial_path.size() > 1)
+                        ? label->resource_consumption[c_res]
+                        : std::numeric_limits<double>::max();
+      };
+      return getScalar(a) < getScalar(b);
+    }
+  };
+  /// Store k-best intermediate labels, use multiset to keep them ordered
+  std::multiset<std::shared_ptr<labelling::Label>, LabelCompare>
+      intermediate_labels;
 
   /// vector with pareto optimal labels (per node) in each direction
   std::vector<std::vector<labelling::Label>> efficient_labels;
@@ -91,7 +111,17 @@ class Search {
   /// Replace intermediate label
   void replaceIntermediateLabel(const labelling::Label& label) {
     auto label_ptr = std::make_shared<labelling::Label>(label);
-    intermediate_label.swap(label_ptr);
+
+    // Remove the current intermediate label if it is the only one
+    if (intermediate_labels.size() == 1 && (*intermediate_labels.begin())->partial_path.size() == 1) {
+      intermediate_labels.clear();
+    }
+
+    intermediate_labels.insert(label_ptr);
+
+    while (intermediate_labels.size() >= k) {
+      intermediate_labels.erase(*intermediate_labels.rbegin());
+    }
   }
 
   /// Update vertices visited
@@ -99,7 +129,7 @@ class Search {
     visited_vertices.insert(lemon_id);
   }
 
-  Search(const Directions& direction_in);
+  Search(const Directions& direction_in, size_t k = 4);
   ~Search(){};
 };
 

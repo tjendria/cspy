@@ -2,8 +2,8 @@
 
 namespace bidirectional {
 
-Search::Search(const Directions& direction_in)
-    : direction(direction_in),
+Search::Search(const Directions& direction_in, size_t k)
+    : direction(direction_in), k(k),
       lower_bound_weight(std::make_unique<std::vector<double>>()),
       unprocessed_labels(std::make_unique<std::vector<labelling::Label>>()){};
 

@@ -316,8 +316,15 @@ bool operator==(const Label& label1, const Label& label2) {
 
 bool operator<(const Label& label1, const Label& label2) {
   const int& c_res = label1.params_ptr->critical_res;
-  return (
-      label1.resource_consumption[c_res] < label2.resource_consumption[c_res]);
+
+  auto left = label1.resource_consumption.size() > c_res
+                  ? label1.resource_consumption[c_res]
+                  : std::numeric_limits<double>::max();
+  auto right = label2.resource_consumption.size() > c_res
+                   ? label2.resource_consumption[c_res]
+                   : std::numeric_limits<double>::max();
+
+  return left < right;
 }
 
 bool operator>(const Label& label1, const Label& label2) {

@@ -10,3 +10,5 @@ xml
 *.sw*
 *.DS_Store
 .python-version
+.clangd
+.vscode/
