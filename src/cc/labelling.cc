@@ -1,7 +1,9 @@
 #include "labelling.h"
 
 #include <algorithm> // sort, includes, copy_if, push/make_heap
+#include <cstddef>
 #include <iostream>  // ostream
+#include <iterator>
 
 namespace labelling {
 
@@ -210,13 +212,17 @@ bool Label::checkDominance(
   const int& resource_size = resource_consumption.size();
   const int& c_res         = params_ptr->critical_res;
 
+  constexpr size_t num_resources = 1;
+  const auto resource_end = resource_consumption.cbegin() + num_resources;
+  const auto other_resource_end = other.resource_consumption.cbegin() + num_resources;
+
   if (weight == other.weight) {
     // Check if all resources are equal
     bool all_res_equal = std::equal(
         resource_consumption.cbegin(),
-        resource_consumption.cend(),
+        resource_end,
         other.resource_consumption.cbegin(),
-        other.resource_consumption.cend());
+        other_resource_end);
     if (all_res_equal) {
       return false;
     }
@@ -227,7 +233,7 @@ bool Label::checkDominance(
   }
   if (direction == bidirectional::FWD) {
     // Forward
-    for (int i = 0; i < resource_size; i++) {
+    for (int i = 0; i < num_resources; i++) {
       if (resource_consumption[i] > other.resource_consumption[i]) {
         return false;
       }
