@@ -38,16 +38,14 @@ class Search {
   /// (shared pointer as we want to be able to substitute it without
   /// resetting)
 
-  // std::shared_ptr<labelling::Label> intermediate_label;
+  std::shared_ptr<labelling::Label> intermediate_label;
   /// Need custom comparator for multiset since elements are pointers
   struct LabelCompare {
     using CT = std::shared_ptr<labelling::Label>;
     bool operator()(const CT& a, const CT& b) const {
-      const int c_res = a->params_ptr->critical_res;
-      auto getScalar = [c_res](const CT& label) {
-        return (label->resource_consumption.size() > c_res && // push invalid labels to end
-                label->partial_path.size() > 1)
-                        ? label->resource_consumption[c_res]
+      auto getScalar = [](const CT& label) {
+        return (label->partial_path.size() > 1)
+                        ? label->weight
                         : std::numeric_limits<double>::max();
       };
       return getScalar(a) < getScalar(b);
@@ -111,13 +109,14 @@ class Search {
   /// Replace intermediate label
   void replaceIntermediateLabel(const labelling::Label& label) {
     auto label_ptr = std::make_shared<labelling::Label>(label);
+    intermediate_label.swap(label_ptr);
 
-    // Remove the current intermediate label if it is the only one
-    if (intermediate_labels.size() == 1 && (*intermediate_labels.begin())->partial_path.size() == 1) {
-      intermediate_labels.clear();
+    // Only insert valid labels
+    if (intermediate_label->resource_consumption.size() <= 0 || intermediate_label->partial_path.size() <= 1) {
+      return;
     }
 
-    intermediate_labels.insert(label_ptr);
+    intermediate_labels.insert(intermediate_label);
 
     while (intermediate_labels.size() >= k) {
       intermediate_labels.erase(*intermediate_labels.rbegin());

@@ -156,6 +156,7 @@ void BiDirectional::init() {
 void BiDirectional::initSearch(const Directions& direction) {
   Search* search_ptr = getSearchPtr(direction);
   search_ptr->k      = params_ptr_->k;
+  search_ptr->intermediate_label = nullptr;
   search_ptr->intermediate_labels.clear();
   // Allocate memory
   search_ptr->lower_bound_weight->resize(graph_ptr_->number_vertices, 0.0);
@@ -282,7 +283,7 @@ void BiDirectional::move(const Directions& direction) {
 
 bool BiDirectional::terminate(const Directions& direction) {
   Search* search_ptr = getSearchPtr(direction);
-  return terminate(direction, **search_ptr->intermediate_labels.begin());
+  return terminate(direction, *search_ptr->intermediate_label);
 }
 
 bool BiDirectional::terminate(
@@ -541,14 +542,12 @@ void BiDirectional::saveCurrentBestLabel(const Directions& direction) {
   Search* search_ptr = getSearchPtr(direction);
 
   const std::shared_ptr<labelling::Label> intermediate_label_ptr =
-      *search_ptr->intermediate_labels.begin();
+      search_ptr->intermediate_label;
   std::shared_ptr<labelling::Label>& current_label_ptr =
       search_ptr->current_label;
 
   if (intermediate_label_ptr->vertex.lemon_id == -1) {
-    search_ptr->intermediate_labels.clear();
-    search_ptr->intermediate_labels.insert(
-        std::make_shared<labelling::Label>(*current_label_ptr));
+    search_ptr->replaceIntermediateLabel(*current_label_ptr);
     return;
   }
 
@@ -590,7 +589,7 @@ void BiDirectional::saveCurrentBestLabel(const Directions& direction) {
         "\t {} \t | \t {}", getElapsedTime(), current_label_ptr->weight);
     SPDLOG_DEBUG(
         "******* Global improvement {}.",
-        (*search_ptr->intermediate_labels.begin())->getString());
+        search_ptr->intermediate_label->getString());
   }
 }
 
