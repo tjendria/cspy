@@ -211,20 +211,25 @@ bool Label::checkDominance(
   const int& c_res         = params_ptr->critical_res;
 
   if (weight == other.weight) {
+    return false; // exclude resource check
+
     // Check if all resources are equal
-    bool all_res_equal = std::equal(
-        resource_consumption.cbegin(),
-        resource_consumption.cend(),
-        other.resource_consumption.cbegin(),
-        other.resource_consumption.cend());
-    if (all_res_equal) {
-      return false;
-    }
+    // bool all_res_equal = std::equal(
+    //     resource_consumption.cbegin(),
+    //     resource_consumption.cend(),
+    //     other.resource_consumption.cbegin(),
+    //     other.resource_consumption.cend());
+    // if (all_res_equal) {
+    //   return false;
+    // }
   }
   // Compare weight
   if (weight > other.weight) {
     return false;
   }
+
+  // Exclude resource based checks
+  /* 
   if (direction == bidirectional::FWD) {
     // Forward
     for (int i = 0; i < resource_size; i++) {
@@ -248,6 +253,7 @@ bool Label::checkDominance(
       }
     }
   }
+    */
 
   if (!checkSameFeasibleExtension(other)) {
     return false;
