@@ -89,9 +89,10 @@ Label Label::extend(
           weight);
     }
   }
+
   // Create new label
   Label new_label(
-      weight + adjacent_vertex.weight,
+      weight + new_resources[1] - resource_consumption[1] + adjacent_vertex.weight,
       new_node,
       new_resources,
       new_partial_path,
